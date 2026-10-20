@@ -350,13 +350,53 @@ async function doLogin(ev) {
   ev.preventDefault(); $('lgBtn').disabled = true; $('lgErr').textContent = '';
   try {
     const r = await api('login', $('lgUser').value, $('lgPass').value);
-    S.token = r.token; localStorage.setItem('tk', r.token); $('lgPass').value = '';
-    start(await api('getInitData'));
+    
+    // บันทึก Token และข้อมูล User ที่ได้จาก Login ไว้ทันที
+    S.token = r.token;
+    S.user = r.user; 
+    localStorage.setItem('tk', r.token); 
+    $('lgPass').value = '';
+
+    // ดึงข้อมูลระบบเพิ่มเติม
+    const initData = await api('getInitData');
+    
+    // รวมข้อมูลและสั่งแสดงผลหน้าหลัก
+    start(Object.assign({}, initData, { user: S.user || initData.user }));
   } catch (e) { 
     $('lgErr').textContent = clean(e.message); 
   } finally { 
     $('lgBtn').disabled = false; 
   }
+}
+
+function start(d) {
+  Object.assign(S, d);
+  $('loginView').classList.add('d-none');$('appView').classList.remove('d-none');
+  
+  // ตรวจสอบข้อมูลผู้ใช้ให้ปลอดภัย ป้องกัน Error อ่านค่า null
+  const uName = (S.user && (S.user.name || S.user.display_name || S.user.username)) || 'ผู้ใช้งาน';
+  const uRole = (S.user && (ROLE_TH[S.user.role] || S.user.role)) || '';
+  $('who').textContent = `${uName} ${uRole ? '(' + uRole + ')' : ''}`;
+  
+  document.querySelectorAll('[data-roles]').forEach(el => el.classList.toggle('d-none', !can(...el.dataset.roles.split(','))));
+  
+  const opts = (S.people || []).map(p => `<option>${esc(p.name)}</option>`).join('');
+  if (S.user && S.user.role === 'user') { 
+    $('REQ_person').innerHTML = `<option>${esc(S.user.person || S.user.name || S.user.username)}</option>`; 
+    $('REQ_person').disabled = true; 
+  } else { 
+    $('REQ_person').innerHTML = '<option value="">-- เลือกผู้เบิก --</option>' + opts; 
+    $('REQ_person').disabled = false; 
+  }
+  
+  $('RCV_person').innerHTML = opts; 
+  if (S.user && S.user.person) $('RCV_person').value = S.user.person;
+  $('uPerson').innerHTML = '<option value="">-</option>' + opts;
+  
+  renderAll(); 
+  resetLines('REQ'); 
+  resetLines('RCV');
+  if (can('approver', 'officer')) loadPending();
 }
 
 function start(d) {
