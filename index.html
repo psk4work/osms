@@ -59,13 +59,13 @@ async function api(action, payload = {}) {
       throw new Error(json.error || 'เกิดข้อผิดพลาด');
     }
     
-    return json.data; // <--- ตัว return ต้องอยู่ข้างในนี้ 
+    return json.data;
 
   } catch (e) {
     console.error(e);
     throw e;
   }
-} // ปิดฟังก์ชัน api ตรงนี้ให้เรียบร้อย
+}
 
 async function doLogin(ev) {
   ev.preventDefault();
