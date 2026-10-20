@@ -38,18 +38,30 @@ let S = { token: localStorage.getItem('tk') || '', user: null };
 
 async function api(action, payload = {}) {
   try {
+    // ใช้ส่งค่าผ่าน POST และจัดการโหมด no-cors หรือรับ JSON ตรงๆ
     const res = await fetch(API_URL, {
       method: 'POST',
       body: JSON.stringify({ action, token: S.token, ...payload })
     });
-    const json = await res.json();
+    
+    const text = await res.text();
+    let json;
+    try {
+      json = JSON.parse(text);
+    } catch (err) {
+      throw new Error('ไม่สามารถเชื่อมต่อกับเซิร์ฟเวอร์ได้ (ตรวจสอบการ Deploy ว่าตั้งสิทธิ์เป็น Anyone หรือยัง)');
+    }
+
     if (!json.success) {
-      if (json.error.includes('SESSION_EXPIRED')) { logout(); throw new Error('หมดเวลาใช้งาน'); }
+      if (json.error.includes('SESSION_EXPIRED') || json.error.includes('SESSION')) { 
+        logout(); 
+        throw new Error('หมดเวลาใช้งาน กรุณาเข้าสู่ระบบใหม่'); 
+      }
       throw new Error(json.error);
     }
     return json.data;
   } catch (e) {
-    alert(e.message);
+    console.error(e);
     throw e;
   }
 }
