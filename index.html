@@ -90,16 +90,32 @@ async function api(action, payload = {}) {
 
 async function doLogin(ev) {
   ev.preventDefault();
-  const u = document.getElementById('lgUser').value;
-  const p = document.getElementById('lgPass').value;
+  const username = document.getElementById('lgUser').value.trim();
+  const password = document.getElementById('lgPass').value;
+  const errDiv = document.getElementById('lgErr');
+  const btn = document.getElementById('lgBtn');
+  
+  errDiv.textContent = '';
+  btn.disabled = true;
+  btn.textContent = 'กำลังเข้าสู่ระบบ...';
+
   try {
-    const res = await fetch(`${API_URL}?action=login&username=${encodeURIComponent(u)}&password=${encodeURIComponent(p)}`);
-    // หรือส่งผ่าน POST ตามความเหมาะสม
-    // สมมติรับค่าสำเร็จ:
-    // S.token = res.token; localStorage.setItem('tk', S.token);
-    // เปิดหน้าแอปหลัก...
-  } catch(e) {
-    document.getElementById('lgErr').textContent = e.message;
+    // ใช้ฟังก์ชัน api() ยิงแบบ POST ไปที่หลังบ้าน
+    const r = await api('login', { username, password });
+    
+    // ถ้าสำเร็จ บันทึก token แล้วโหลดหน้าแอปหลัก
+    S.token = r.token;
+    localStorage.setItem('tk', r.token);
+    
+    // ดึงข้อมูลเริ่มต้นและเปิดหน้าแอป
+    const initData = await api('getInitData');
+    start(initData);
+    
+  } catch (e) {
+    errDiv.textContent = e.message;
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'เข้าสู่ระบบ';
   }
 }
 
