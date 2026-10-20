@@ -311,11 +311,16 @@ async function api(fn, ...a) {
 
     if (!json.success) {
       const m = clean(json.error);
-      // เปลี่ยนจุดนี้: ไม่สั่ง logout() พร่ำเพรื่อ ยกเว้นกรณีที่เป็น SESSION_EXPIRED ชัดเจน
-      if (m === 'SESSION_EXPIRED' || m === 'UNAUTHORIZED') { 
+      
+      // ป้องกันไม่ให้เด้งหลุดออกหน้าล็อกอินพร่ำเพรื่อ 
+      // (ให้เด้งออกเฉพาะตอนกดออกจากระบบเอง หรือ token หมดอายุจริงๆ เท่านั้น)
+      if (m === 'FORCED_LOGOUT') { 
         logout(); 
         throw new Error('หมดเวลาใช้งาน กรุณาเข้าสู่ระบบใหม่'); 
       }
+      
+      // ถ้าไม่ใช่เคสบังคับออก ให้แสดงข้อความเตือนเฉยๆ แต่ไม่ทำลาย Session
+      console.warn("API Warning:", m);
       throw new Error(m);
     }
     return json.data;
