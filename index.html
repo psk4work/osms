@@ -311,8 +311,8 @@ async function api(fn, ...a) {
 
     if (!json.success) {
       const m = clean(json.error);
-      // ป้องกันไม่ให้เด้งหลุดตอนเปิดหน้าเว็บครั้งแรกที่ยังไม่มี Token
-      if (fn !== 'getInitData' && m.includes('SESSION')) { 
+      // เปลี่ยนจุดนี้: ไม่สั่ง logout() พร่ำเพรื่อ ยกเว้นกรณีที่เป็น SESSION_EXPIRED ชัดเจน
+      if (m === 'SESSION_EXPIRED' || m === 'UNAUTHORIZED') { 
         logout(); 
         throw new Error('หมดเวลาใช้งาน กรุณาเข้าสู่ระบบใหม่'); 
       }
@@ -324,7 +324,6 @@ async function api(fn, ...a) {
     throw e;
   }
 }
-
 async function busy(btn, fn) {
   const t = btn.textContent; btn.disabled = true; btn.textContent = 'กำลังบันทึก...';
   try { return await fn(); } catch (e) { return null; } finally { btn.disabled = false; btn.textContent = t; }
