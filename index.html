@@ -18,7 +18,7 @@
 <body>
 
 <!-- ================= LOGIN ================= -->
-<div id="loginView" class="d-none"><div class="card login-box"><div class="card-body p-4">
+<div id="loginView" class="container"><div class="card login-box"><div class="card-body p-4">
   <h4 class="text-center mb-1">ระบบเบิกจ่ายวัสดุสำนักงาน</h4>
   <p class="text-center text-muted small mb-4">เข้าสู่ระบบผ่าน GitHub Pages</p>
   <form onsubmit="doLogin(event)">
@@ -311,8 +311,11 @@ async function api(fn, ...a) {
 
     if (!json.success) {
       const m = clean(json.error);
-      if (m.includes('SESSION_EXPIRED')) { alert('หมดเวลาใช้งาน กรุณาเข้าสู่ระบบใหม่'); showLogin(); }
-      else alert(m);
+      // ป้องกันไม่ให้เด้งหลุดตอนเปิดหน้าเว็บครั้งแรกที่ยังไม่มี Token
+      if (fn !== 'getInitData' && m.includes('SESSION')) { 
+        logout(); 
+        throw new Error('หมดเวลาใช้งาน กรุณาเข้าสู่ระบบใหม่'); 
+      }
       throw new Error(m);
     }
     return json.data;
