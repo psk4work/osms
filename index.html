@@ -38,20 +38,17 @@ let S = { token: localStorage.getItem('tk') || '', user: null };
 
 async function api(action, payload = {}) {
   try {
-    // ใช้โหมด no-cors หรือปรับ payload เป็น URLSearchParams เพื่อเลี่ยงการบล็อก CORS ของเบราว์เซอร์
     const res = await fetch(API_URL, {
       method: 'POST',
       body: JSON.stringify({ action, token: S.token, ...payload })
     });
     
-    // Google Apps Script จะส่งข้อมูลกลับมาผ่าน Text
     const text = await res.text();
     let json;
     try {
       json = JSON.parse(text);
     } catch (err) {
-      // ถ้าติด CORS เบราว์เซอร์อาจจะอ่าน text ไม่ได้ ให้ลองแจ้งเตือนชัดเจน
-      throw new Error('เชื่อมต่อสำเร็จแต่ไม่สามารถอ่านข้อมูลได้ (CORS Error)');
+      throw new Error('ไม่สามารถเชื่อมต่อกับเซิร์ฟเวอร์ได้');
     }
 
     if (!json.success) {
@@ -59,37 +56,20 @@ async function api(action, payload = {}) {
         logout(); 
         throw new Error('หมดเวลาใช้งาน กรุณาเข้าสู่ระบบใหม่'); 
       }
-      throw new Error(json.error || 'เกิดข้อผิดพลาดที่ไม่รู้จัก');
+      throw new Error(json.error || 'เกิดข้อผิดพลาด');
     }
-    return json.data;
-  } catch (e) {
-    console.error(e);
-    // แจ้งเตือนสาเหตุที่ชัดเจนหากยังติดปัญหา fetch
-    if (e.message === 'Failed to fetch') {
-      alert('ไม่สามารถเชื่อมต่อกับ Google Apps Script ได้ กรุณาตรวจสอบว่า Deploy สิทธิ์เป็น "ทุกคน" หรือยัง');
-    } else {
-      alert(e.message);
-    }
-    throw e;
-  }
-}
+    
+    return json.data; // <--- ตัว return ต้องอยู่ข้างในนี้ 
 
-    if (!json.success) {
-      if (json.error.includes('SESSION_EXPIRED') || json.error.includes('SESSION')) { 
-        logout(); 
-        throw new Error('หมดเวลาใช้งาน กรุณาเข้าสู่ระบบใหม่'); 
-      }
-      throw new Error(json.error);
-    }
-    return json.data;
   } catch (e) {
     console.error(e);
     throw e;
   }
-}
+} // ปิดฟังก์ชัน api ตรงนี้ให้เรียบร้อย
 
 async function doLogin(ev) {
   ev.preventDefault();
+  // โค้ด login ต่อจากนี้...
   const username = document.getElementById('lgUser').value.trim();
   const password = document.getElementById('lgPass').value;
   const errDiv = document.getElementById('lgErr');
