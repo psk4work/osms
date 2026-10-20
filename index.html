@@ -25,20 +25,19 @@
   </form>
 </div></div></div>
 
-<!-- App View (โครงสร้างหน้าเว็บหลักตามโค้ดเดิม) -->
+<!-- App View -->
 <div id="appView" class="d-none">
   <!-- ใส่ Navbar และ Tab เนื้อหาทั้งหมดตรงนี้เหมือนโค้ดเดิม -->
 </div>
 
 <script>
-// ⚠️ ใส่ URL ของ Google Apps Script Web App ที่ได้จากการ Deploy ตรงนี้
 const API_URL = "https://script.google.com/macros/s/AKfycbwV6nUhUaPUJuy-GRED3AMqs68FxDIEHRaefqpH8095E3FK06cHkzUj-oMAbbnaTk7q/exec";
 
 let S = { token: localStorage.getItem('tk') || '', user: null };
 
 async function api(action, payload = {}) {
   try {
-    // แปลง payload เป็น Query Parameters เพื่อยิงผ่าน GET ป้องกันปัญหา CORS บน GitHub Pages
+    // เปลี่ยนมาใช้ GET โดยแนบข้อมูลไปกับ URLSearchParams เพื่อป้องกันปัญหา CORS
     const params = new URLSearchParams({ action, token: S.token, ...payload });
     const res = await fetch(`${API_URL}?${params.toString()}`);
     
@@ -65,9 +64,9 @@ async function api(action, payload = {}) {
     throw e;
   }
 }
+
 async function doLogin(ev) {
   ev.preventDefault();
-  // โค้ด login ต่อจากนี้...
   const username = document.getElementById('lgUser').value.trim();
   const password = document.getElementById('lgPass').value;
   const errDiv = document.getElementById('lgErr');
@@ -78,14 +77,12 @@ async function doLogin(ev) {
   btn.textContent = 'กำลังเข้าสู่ระบบ...';
 
   try {
-    // ใช้ฟังก์ชัน api() ยิงแบบ POST ไปที่หลังบ้าน
+    // เรียกใช้งานผ่านฟังก์ชัน api() ซึ่งถูกปรับให้รองรับ GET แล้ว
     const r = await api('login', { username, password });
     
-    // ถ้าสำเร็จ บันทึก token แล้วโหลดหน้าแอปหลัก
     S.token = r.token;
     localStorage.setItem('tk', r.token);
     
-    // ดึงข้อมูลเริ่มต้นและเปิดหน้าแอป
     const initData = await api('getInitData');
     start(initData);
     
@@ -100,6 +97,12 @@ async function doLogin(ev) {
 function logout() {
   S.token = ''; localStorage.removeItem('tk');
   location.reload();
+}
+
+function start(data) {
+  // ฟังก์ชันเริ่มต้นแอปพลิเคชันของคุณหลังจากล็อกอินสำเร็จ
+  document.getElementById('loginView').classList.add('d-none');
+  document.getElementById('appView').classList.remove('d-none');
 }
 </script>
 </body>
