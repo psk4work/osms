@@ -269,12 +269,14 @@ const avail = it => it ? (Number(it.qty) - (S.reserved[it.item_id] || 0)) : 0;
 const EMPTY = n => `<tr><td colspan="${n}" class="text-center text-muted">ไม่มีข้อมูล</td></tr>`;
 
 // ฟังก์ชันสื่อสารกับ Google Apps Script แบบ GET Parameter
+// ฟังก์ชัน api ที่ถูกต้อง:
 async function api(action, ...args) {
   const p = new URLSearchParams();
   p.append('action', action);
   p.append('token', S.token || 'active_token');
   p.append('args', JSON.stringify(args));
 
+  // ใช้ API_URL (ตรงตามที่ประกาศไว้บรรทัดแรกสุดของสคริปต์)
   const res = await fetch(`${API_URL}?${p.toString()}`).catch(err => {
     throw new Error("Connection Error: " + err.message);
   });
@@ -285,7 +287,6 @@ async function api(action, ...args) {
   }
   return json.data;
 }
-
 async function doLogin(ev) {
   ev.preventDefault(); $('lgBtn').disabled = true; $('lgErr').textContent = '';
   try {
