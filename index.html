@@ -601,7 +601,14 @@ async function saveAdj() {
 
 // ---------- เอกสาร ----------
 async function loadDocs() {
-  const docs = await api('listDocs', { from: $('dFrom').value, to: $('dTo').value, type: $('dType').value, status: $('dStatus').value }).catch(() => null);
+  const filter = {
+    from: $('dFrom').value,
+    to: $('dTo').value,
+    type: $('dType').value,
+    status: $('dStatus').value,
+    user: S.user // ส่งข้อมูลผู้ใช้ปัจจุบันไปกรองสิทธิ์
+  };
+  const docs = await api('listDocs', filter).catch(() => null);
   if (!docs) return;
   $('docBody').innerHTML = docs.map(d => `<tr><td>${esc(d.doc_no)}</td><td>${TYPE_TH[d.doc_type] || d.doc_type}</td>
     <td>${thd(d.doc_date)}</td><td>${esc(d.person)}</td><td class="small">${esc(d.items)}</td><td>${badge(d.status)}</td>
