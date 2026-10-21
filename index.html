@@ -36,7 +36,6 @@
   <div class="d-flex align-items-center gap-2 flex-wrap">
     <span class="text-white small" id="who"></span>
     <button class="btn btn-sm btn-light" onclick="refresh()">รีเฟรช</button>
-    <button class="btn btn-sm btn-outline-light" onclick="modal('mPw').show()">เปลี่ยนรหัสผ่าน</button>
     <button class="btn btn-sm btn-outline-light" onclick="logout()">ออกจากระบบ</button>
   </div>
 </div></nav>
@@ -47,10 +46,8 @@
   <li class="nav-item"><button class="nav-link" data-bs-toggle="pill" data-bs-target="#tREQ">ขอเบิกวัสดุ</button></li>
   <li class="nav-item" data-roles="approver,officer"><button class="nav-link" data-bs-toggle="pill" data-bs-target="#tAppr" onclick="loadPending()">อนุมัติ/จ่ายของ <span id="pendBadge" class="badge text-bg-danger"></span></button></li>
   <li class="nav-item" data-roles="officer"><button class="nav-link" data-bs-toggle="pill" data-bs-target="#tRCV">รับวัสดุเข้า</button></li>
-  <li class="nav-item" data-roles="officer"><button class="nav-link" data-bs-toggle="pill" data-bs-target="#tADJ" onclick="renderAdj()">ตรวจนับ/ปรับยอด</button></li>
   <li class="nav-item"><button class="nav-link" data-bs-toggle="pill" data-bs-target="#tStock">คลังวัสดุ</button></li>
   <li class="nav-item"><button class="nav-link" data-bs-toggle="pill" data-bs-target="#tDocs" onclick="loadDocs()">เอกสาร</button></li>
-  <li class="nav-item" data-roles="approver,officer"><button class="nav-link" data-bs-toggle="pill" data-bs-target="#tRpt">รายงาน</button></li>
   <li class="nav-item" data-roles="admin"><button class="nav-link" data-bs-toggle="pill" data-bs-target="#tUsers" onclick="loadUsers()">ผู้ใช้งาน</button></li>
 </ul>
 
@@ -79,7 +76,6 @@
       <thead><tr><th>#</th><th style="width:50%">รายการวัสดุ</th><th>หน่วย</th><th class="text-end">พร้อมเบิก</th><th style="width:120px">จำนวนขอเบิก</th><th></th></tr></thead>
       <tbody id="REQ_lines"></tbody>
     </table>
-    <div class="form-text mb-2">พร้อมเบิก = คงเหลือ − จำนวนที่ติดจองในใบเบิกที่ยังไม่จ่าย</div>
     <button class="btn btn-outline-primary btn-sm" onclick="addLine('REQ')">+ เพิ่มรายการ</button>
     <button class="btn btn-primary float-end" id="REQ_btn" onclick="submitDoc('REQ')">ส่งใบเบิก (รออนุมัติ)</button>
   </div></div></div>
@@ -95,7 +91,7 @@
     <div class="card"><div class="card-body">
       <h5>อนุมัติแล้ว รอจ่ายของ</h5>
       <div class="table-responsive"><table class="table table-sm align-middle">
-        <thead><tr><th>เลขที่</th><th>วันที่</th><th>ผู้เบิก</th><th>รายการ (จำนวนที่อนุมัติ)</th><th></th></tr></thead>
+        <thead><tr><th>เลขที่</th><th>วันที่</th><th>ผู้เบิก</th><th>รายการ</th><th></th></tr></thead>
         <tbody id="apprBody"></tbody></table></div>
     </div></div>
   </div>
@@ -117,27 +113,6 @@
     <button class="btn btn-success float-end" id="RCV_btn" onclick="submitDoc('RCV')">บันทึกรับเข้า</button>
   </div></div></div>
 
-  <!-- ตรวจนับ / ปรับยอด -->
-  <div class="tab-pane fade" id="tADJ"><div class="card"><div class="card-body">
-    <h5>ตรวจนับและปรับยอดคงเหลือ</h5>
-    <div class="row g-2 mb-2">
-      <div class="col-md-3"><label class="form-label">วันที่ตรวจนับ</label><input type="date" id="adjDate" class="form-control"></div>
-      <div class="col-md-5"><label class="form-label">หมายเหตุ</label><input id="adjNote" class="form-control" placeholder="เช่น ตรวจนับวัสดุคงเหลือ ณ สิ้นปีงบประมาณ 2569"></div>
-      <div class="col-md-4"><label class="form-label">ค้นหา</label><input id="adjQ" class="form-control" oninput="renderAdj()"></div>
-    </div>
-    <div class="mb-2 d-flex gap-2 flex-wrap align-items-center">
-      <button class="btn btn-sm btn-outline-secondary" onclick="printReport('count')">พิมพ์แบบฟอร์มตรวจนับ (A4)</button>
-      <button class="btn btn-sm btn-outline-secondary" onclick="fillAdj()">ใส่ยอดตรวจนับ = ยอดในระบบ (รายการที่แสดง)</button>
-      <button class="btn btn-sm btn-outline-danger" onclick="ADJ={};renderAdj()">ล้างค่า</button>
-      <span class="ms-auto small" id="adjSum"></span>
-    </div>
-    <div class="tbl-scroll"><table class="table table-sm align-middle">
-      <thead class="sticky-top bg-white"><tr><th>รหัส</th><th>วัสดุ</th><th>หน่วย</th><th class="text-end">ในระบบ</th><th style="width:110px">ตรวจนับได้</th><th class="text-end">ผลต่าง</th><th>เหตุผล</th></tr></thead>
-      <tbody id="adjBody"></tbody>
-    </table></div>
-    <button class="btn btn-warning mt-2 float-end" id="adjBtn" onclick="saveAdj()">บันทึกปรับยอด</button>
-  </div></div></div>
-
   <!-- คลังวัสดุ -->
   <div class="tab-pane fade" id="tStock"><div class="card"><div class="card-body">
     <div class="d-flex gap-2 mb-2">
@@ -145,10 +120,9 @@
       <select id="qStatus" class="form-select w-auto" onchange="renderStock()">
         <option value="">ทุกสถานะ</option><option>ปกติ</option><option>ใกล้หมด</option><option>หมดแล้ว</option><option>ไม่ใช้แล้ว</option>
       </select>
-      <button class="btn btn-success text-nowrap" data-roles="officer" onclick="editItem()">+ เพิ่มวัสดุใหม่</button>
     </div>
     <div class="table-responsive"><table class="table table-sm table-hover">
-      <thead><tr><th>รหัส</th><th>วัสดุ</th><th>หน่วย</th><th class="text-end">คงเหลือ</th><th class="text-end">ติดจอง</th><th class="text-end">ขั้นต่ำ</th><th class="text-end">สูงสุด</th><th>สถานะ</th><th></th></tr></thead>
+      <thead><tr><th>รหัส</th><th>วัสดุ</th><th>หน่วย</th><th class="text-end">คงเหลือ</th><th class="text-end">ขั้นต่ำ</th><th class="text-end">สูงสุด</th><th>สถานะ</th></tr></thead>
       <tbody id="stockBody"></tbody>
     </table></div>
   </div></div></div>
@@ -159,9 +133,9 @@
       <div class="col-md-2"><label class="form-label">ตั้งแต่</label><input type="date" id="dFrom" class="form-control"></div>
       <div class="col-md-2"><label class="form-label">ถึง</label><input type="date" id="dTo" class="form-control"></div>
       <div class="col-md-3"><label class="form-label">ประเภท</label><select id="dType" class="form-select">
-        <option value="">ทั้งหมด</option><option value="REQ">เบิก</option><option value="RCV">รับเข้า</option><option value="ADJ">ปรับยอด</option></select></div>
+        <option value="">ทั้งหมด</option><option value="REQ">เบิก</option><option value="RCV">รับเข้า</option></select></div>
       <div class="col-md-3"><label class="form-label">สถานะ</label><select id="dStatus" class="form-select">
-        <option value="">ทั้งหมด</option><option>รออนุมัติ</option><option>อนุมัติแล้ว</option><option>จ่ายแล้ว</option><option>ไม่อนุมัติ</option><option>ปกติ</option><option>ยกเลิก</option></select></div>
+        <option value="">ทั้งหมด</option><option>รออนุมัติ</option><option>อนุมัติแล้ว</option><option>จ่ายแล้ว</option><option>ไม่อนุมัติ</option></select></div>
       <div class="col-md-2"><button class="btn btn-primary w-100" onclick="loadDocs()">แสดง</button></div>
     </div></div></div>
     <div class="card"><div class="card-body"><div class="table-responsive"><table class="table table-sm align-middle">
@@ -169,33 +143,11 @@
       <tbody id="docBody"></tbody></table></div></div></div>
   </div>
 
-  <!-- รายงาน -->
-  <div class="tab-pane fade" id="tRpt">
-    <div class="card mb-3"><div class="card-body"><div class="row g-2 align-items-end">
-      <div class="col-md-4"><label class="form-label">รายงาน</label><select id="rType" class="form-select">
-        <option value="movement">สรุปรับ-จ่าย-คงเหลือ</option>
-        <option value="byPerson">การเบิกแยกตามผู้เบิก</option>
-        <option value="stock">วัสดุคงเหลือและจำนวนที่ต้องจัดซื้อ</option>
-        <option value="expiry">วัสดุที่มีวันหมดอายุ</option>
-        <option value="count">แบบฟอร์มตรวจนับวัสดุ</option></select></div>
-      <div class="col-md-2"><label class="form-label">ตั้งแต่</label><input type="date" id="rFrom" class="form-control"></div>
-      <div class="col-md-2"><label class="form-label">ถึง</label><input type="date" id="rTo" class="form-control"></div>
-      <div class="col-md-4 d-flex gap-1">
-        <button class="btn btn-primary flex-fill" onclick="showReport()">แสดง</button>
-        <button class="btn btn-outline-primary flex-fill" onclick="printReport()">พิมพ์ A4</button>
-      </div>
-    </div><div id="expLink" class="mt-2 small"></div></div></div>
-    <div class="card"><div class="card-body">
-      <h5 id="rTitle"></h5><div class="text-muted small mb-2" id="rSub"></div>
-      <div class="table-responsive"><table class="table table-sm table-striped"><thead id="rHead"></thead><tbody id="rBody"></tbody></table></div>
-    </div></div>
-  </div>
-
   <!-- ผู้ใช้งาน -->
   <div class="tab-pane fade" id="tUsers"><div class="card"><div class="card-body">
-    <div class="d-flex mb-2"><h5 class="me-auto">ผู้ใช้งาน</h5><button class="btn btn-success btn-sm" onclick="editUser()">+ เพิ่มผู้ใช้</button></div>
+    <div class="d-flex mb-2"><h5 class="me-auto">ผู้ใช้งาน</h5></div>
     <div class="table-responsive"><table class="table table-sm align-middle">
-      <thead><tr><th>ชื่อผู้ใช้</th><th>ชื่อที่แสดง</th><th>สิทธิ์</th><th>ผูกกับบุคลากร</th><th>สถานะ</th><th>เข้าใช้ล่าสุด</th><th></th></tr></thead>
+      <thead><tr><th>ชื่อผู้ใช้</th><th>ชื่อที่แสดง</th><th>สิทธิ์</th><th>ผูกกับบุคลากร</th><th>สถานะ</th></tr></thead>
       <tbody id="userBody"></tbody></table></div>
   </div></div></div>
 </div>
@@ -216,7 +168,7 @@
   <div class="modal-header"><h5 class="modal-title" id="apTitle"></h5><button class="btn-close" data-bs-dismiss="modal"></button></div>
   <div class="modal-body">
     <div id="apInfo" class="mb-2 small"></div>
-    <table class="table table-sm align-middle"><thead><tr><th>วัสดุ</th><th>หน่วย</th><th class="text-end">คงเหลือ</th><th class="text-end">ขอเบิก</th><th style="width:120px">อนุมัติ</th></tr></thead>
+    <table class="table table-sm align-middle"><thead><tr><th>วัสดุ</th><th>หน่วย</th><th class="text-end">ขอเบิก</th><th style="width:120px">อนุมัติ</th></tr></thead>
       <tbody id="apBody"></tbody></table>
     <input id="apNote" class="form-control" placeholder="ความเห็น/เหตุผล (บังคับกรอกเมื่อไม่อนุมัติ)">
   </div>
@@ -234,23 +186,12 @@
   <div class="modal-body p-0"><iframe id="printFrame"></iframe></div>
 </div></div></div>
 
-<!-- เปลี่ยนรหัสผ่าน -->
-<div class="modal fade" id="mPw" tabindex="-1"><div class="modal-dialog modal-sm"><div class="modal-content">
-  <div class="modal-header"><h5 class="modal-title">เปลี่ยนรหัสผ่าน</h5></div>
-  <div class="modal-body">
-    <input id="pwOld" type="password" class="form-control mb-2" placeholder="รหัสผ่านเดิม">
-    <input id="pwNew" type="password" class="form-control mb-2" placeholder="รหัสผ่านใหม่ (≥6 ตัว)">
-    <input id="pwNew2" type="password" class="form-control" placeholder="ยืนยันรหัสผ่านใหม่">
-  </div>
-  <div class="modal-footer"><button class="btn btn-primary w-100" onclick="changePw()">บันทึก</button></div>
-</div></div></div>
-
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 <script>
 const API_URL = "https://script.google.com/macros/s/AKfycbwV6nUhUaPUJuy-GRED3AMqs68FxDIEHRaefqpH8095E3FK06cHkzUj-oMAbbnaTk7q/exec";
 
-let S = { token: localStorage.getItem('tk') || 'active_token', user: null, items: [], reserved: {}, pending: 0, people: [], users: [] };
-let ADJ = {}, CUR = null;
+let S = { user: null, items: [], pending: 0, people: [], users: [] };
+let CUR = null;
 
 const $ = id => document.getElementById(id);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -258,25 +199,19 @@ const clean = m => String(m || '').replace(/^(Error|Exception|ScriptError):\s*/i
 const ymd = d => { d = new Date(d); d.setMinutes(d.getMinutes() - d.getTimezoneOffset()); return d.toISOString().slice(0, 10); };
 const thd = d => d ? new Date(d).toLocaleDateString('th-TH') : '';
 const ROLE_TH = { user: 'ผู้เบิก', approver: 'ผู้อนุมัติ', officer: 'เจ้าหน้าที่พัสดุ', admin: 'ผู้ดูแลระบบ' };
-const TYPE_TH = { REQ: 'เบิก', RCV: 'รับเข้า', ADJ: 'ปรับยอด' };
-const BADGE = { 'ปกติ':'success','ใกล้หมด':'warning','หมดแล้ว':'danger','ไม่ใช้แล้ว':'secondary',
-                'รออนุมัติ':'warning','อนุมัติแล้ว':'info','จ่ายแล้ว':'success','ไม่อนุมัติ':'danger','ยกเลิก':'secondary' };
+const TYPE_TH = { REQ: 'เบิก', RCV: 'รับเข้า' };
+const BADGE = { 'ปกติ':'success','ใกล้หมด':'warning','หมดแล้ว':'danger','รออนุมัติ':'warning','อนุมัติแล้ว':'info','จ่ายแล้ว':'success','ไม่อนุมัติ':'danger' };
 const badge = s => `<span class="badge text-bg-${BADGE[s] || 'light'}">${esc(s)}</span>`;
 const can = (...r) => !!S.user && (S.user.role === 'admin' || r.includes(S.user.role));
 const modal = id => bootstrap.Modal.getOrCreateInstance($(id));
 const itemOf = id => (S.items || []).find(i => String(i.item_id) === String(id));
-const avail = it => it ? (Number(it.qty) - (S.reserved[it.item_id] || 0)) : 0;
 const EMPTY = n => `<tr><td colspan="${n}" class="text-center text-muted">ไม่มีข้อมูล</td></tr>`;
 
-// ฟังก์ชันสื่อสารกับ Google Apps Script แบบ GET Parameter
-// ฟังก์ชัน api ที่ถูกต้อง:
 async function api(action, ...args) {
   const p = new URLSearchParams();
   p.append('action', action);
-  p.append('token', S.token || 'active_token');
   p.append('args', JSON.stringify(args));
 
-  // ใช้ API_URL (ตรงตามที่ประกาศไว้บรรทัดแรกสุดของสคริปต์)
   const res = await fetch(`${API_URL}?${p.toString()}`).catch(err => {
     throw new Error("Connection Error: " + err.message);
   });
@@ -287,13 +222,12 @@ async function api(action, ...args) {
   }
   return json.data;
 }
+
 async function doLogin(ev) {
   ev.preventDefault(); $('lgBtn').disabled = true; $('lgErr').textContent = '';
   try {
     const r = await api('login', $('lgUser').value, $('lgPass').value);
-    S.token = r.token || 'active_token';
     S.user = r.user; 
-    localStorage.setItem('tk', S.token); 
     $('lgPass').value = '';
 
     const initData = await api('getInitData');
@@ -343,8 +277,6 @@ async function refresh() {
 }
 
 async function logout() { 
-  try { await api('logout'); } catch (e) {} 
-  localStorage.removeItem('tk');
   location.reload();
 }
 
@@ -361,22 +293,21 @@ function renderAll() {
   const c = { 'ปกติ': 0, 'ใกล้หมด': 0, 'หมดแล้ว': 0 };
   (S.items || []).forEach(i => { const s = status(i); if (s in c) c[s]++; });
   $('kpi').innerHTML = [['วัสดุที่ใช้งาน', c['ปกติ'] + c['ใกล้หมด'] + c['หมดแล้ว'], 'primary'], ['ใกล้หมด', c['ใกล้หมด'], 'warning'],
-    ['หมดแล้ว', c['หมดแล้ว'], 'danger'], [S.user && S.user.role === 'user' ? 'ใบเบิกของฉันที่ยังไม่จ่าย' : 'ใบเบิกที่ยังไม่จ่าย', S.pending || 0, 'info']]
+    ['หมดแล้ว', c['หมดแล้ว'], 'danger'], ['ใบเบิกที่ยังไม่จ่าย', S.pending || 0, 'info']]
     .map(([t, n, col]) => `<div class="col-6 col-md-3"><div class="card border-start border-4 border-${col}"><div class="card-body"><div class="text-muted small">${t}</div><h3>${n}</h3></div></div></div>`).join('');
   $('warnBody').innerHTML = (S.items || []).filter(i => ['ใกล้หมด', 'หมดแล้ว'].includes(status(i))).map(i =>
     `<tr><td>${i.item_id}</td><td>${esc(i.name)}</td><td>${esc(i.unit)}</td><td class="text-end">${i.qty}</td><td class="text-end">${i.min_qty}</td><td class="text-end">${i.max_qty}</td><td class="text-end fw-bold">${toBuy(i)}</td></tr>`).join('')
     || '<tr><td colspan="7" class="text-center text-muted">ไม่มีรายการที่ต้องจัดซื้อ</td></tr>';
   renderStock();
-  $('REQ_date').value = ymd(new Date());
-  $('RCV_date').value = ymd(new Date());
+  $('REQ_date').value = ymd(new Date());$('RCV_date').value = ymd(new Date());
 }
 
 function renderStock() {
-  const q = $('q').value.trim().toLowerCase(), st = $('qStatus').value;
+  const q = $('q').value.trim().toLowerCase(), st =$('qStatus').value;
   $('stockBody').innerHTML = (S.items || []).filter(i => (!q || (i.item_id + ' ' + i.name).toLowerCase().includes(q)) && (!st || status(i) === st))
     .map(i => `<tr><td>${i.item_id}</td><td>${esc(i.name)}</td><td>${esc(i.unit)}</td><td class="text-end">${i.qty}</td>
-      <td class="text-end">${S.reserved[i.item_id] || ''}</td><td class="text-end">${i.min_qty}</td><td class="text-end">${i.max_qty}</td>
-      <td>${badge(status(i))}</td><td></td></tr>`).join('');
+      <td class="text-end">${i.min_qty}</td><td class="text-end">${i.max_qty}</td>
+      <td>${badge(status(i))}</td></tr>`).join('');
 }
 
 function resetLines(t) { $(t + '_lines').innerHTML = ''; addLine(t); }
@@ -393,7 +324,7 @@ function addLine(t) {
     const it = itemOf(inp.value.split('|')[0].trim());
     tr.dataset.id = it ? it.item_id : '';
     tr.querySelector('.unit').textContent = it ? it.unit : '';
-    tr.querySelector('.bal').textContent = it ? (t === 'REQ' ? avail(it) : it.qty) : '';
+    tr.querySelector('.bal').textContent = it ? it.qty : '';
     inp.classList.toggle('is-invalid', !it);
     if (it && tr === $(t + '_lines').lastElementChild) addLine(t);
   });
@@ -415,14 +346,14 @@ async function submitDoc(t) {
   if (!lines.length) return alert('กรุณาเลือกรายการวัสดุ');
   if (lines.some(l => !(l.qty > 0))) return alert('กรุณาระบุจำนวนให้ครบและมากกว่า 0');
   
-  const p = { date: $(t + '_date').value, person: $(t + '_person').value, note: $(t + '_note').value,
+  const p = { date: $(t + '_date').value, person: $(t + '_person').value, note:$(t + '_note').value,
               ref_no: t === 'RCV' ? $('RCV_ref').value.trim() : '', lines };
   if (!p.person) return alert('กรุณาเลือกชื่อ');
   if (t === 'RCV' && !p.ref_no) return alert('กรุณาระบุเลขที่ใบส่งของ');
   
   const r = await busy($(t + '_btn'), () => api(t === 'REQ' ? 'createRequest' : 'saveReceive', p));
   if (!r) return;
-  resetLines(t); $(t + '_note').value = ''; if (t === 'RCV') $('RCV_ref').value = '';
+  resetLines(t); $(t + '_note').value = ''; if (t === 'RCV')$('RCV_ref').value = '';
   await refresh();
   showResult(t === 'REQ' ? `ส่งใบเบิกเลขที่ ${r.doc_no} แล้ว อยู่ระหว่างรออนุมัติ` : `บันทึกรับเข้าเลขที่ ${r.doc_no} แล้ว`, r.doc_no);
 }
@@ -446,7 +377,7 @@ async function loadDocs() {
     to: $('dTo').value,
     type: $('dType').value,
     status: $('dStatus').value,
-    user: S.user // แนบข้อมูลผู้ใช้งานปัจจุบันไปกรองเฉพาะของผู้เบิก
+    user: S.user
   };
   const docs = await api('listDocs', filter).catch(() => null);
   if (!docs) return;
@@ -471,7 +402,7 @@ async function openAppr(doc) {
   $('apTitle').textContent = 'พิจารณาใบเบิกเลขที่ ' + d.doc.doc_no;
   $('apInfo').innerHTML = `ผู้เบิก: <b>${esc(d.doc.person)}</b> | วันที่ ${thd(d.doc.doc_date)}${d.doc.note ? ' | หมายเหตุ: ' + esc(d.doc.note) : ''}`;
   $('apBody').innerHTML = d.lines.map(l => `<tr><td>${esc(l.item_name)}</td><td>${esc(l.unit)}</td>
-    <td class="text-end">${l.stock || 0}</td><td class="text-end">${l.qty_req}</td>
+    <td class="text-end">${l.qty_req}</td>
     <td><input type="number" min="0" max="${l.qty_req}" value="${l.qty_req}" data-id="${l.item_id}" class="form-control form-control-sm apq"></td></tr>`).join('');
   $('apNote').value = ''; modal('mAppr').show();
 }
@@ -484,12 +415,17 @@ async function decide(ok) {
   modal('mAppr').hide(); refresh();
 }
 
+async function pay(doc) {
+  if (!confirm(`ยืนยันจ่ายของตามใบเบิก ${doc} และตัดยอดคงเหลือ?`)) return;
+  const r = await api('payRequest', doc).catch(() => null); if (r === null) return;
+  await refresh();
+}
+
 async function loadUsers() {
   const users = await api('listUsers').catch(() => null);
   if (!users) return;
   $('userBody').innerHTML = users.map(u => `<tr><td>${esc(u.username)}</td><td>${esc(u.display_name)}</td>
-    <td>${ROLE_TH[u.role] || u.role}</td><td>${esc(u.person_name)}</td><td>${badge(u.active ? 'ปกติ' : 'ไม่ใช้แล้ว')}</td>
-    <td>${thd(u.last_login)}</td><td></td></tr>`).join('') || EMPTY(7);
+    <td>${ROLE_TH[u.role] || u.role}</td><td>${esc(u.person_name)}</td><td>${badge(u.active ? 'ปกติ' : 'ไม่ใช้แล้ว')}</td></tr>`).join('') || EMPTY(5);
 }
 </script>
 </body>
