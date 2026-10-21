@@ -1,425 +1,256 @@
-<!DOCTYPE html>
-<html>
+<!doctype html>
+<html lang="th">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>ระบบเบิกจ่ายวัสดุสำนักงาน</title>
-<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;600&display=swap" rel="stylesheet">
-<style>
-  body{font-family:'Sarabun',sans-serif;background:#f4f6fb}
-  .card{box-shadow:0 1px 6px rgba(0,0,0,.08);border:0}
-  .login-box{max-width:380px;margin:12vh auto}
-  .kpi h3{margin:0}
-  .tbl-scroll{max-height:60vh;overflow:auto}
-  #printFrame{width:100%;height:78vh;border:0;background:#fff}
-</style>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>ระบบเบิกจ่ายวัสดุสำนักงาน</title>
+  <style>
+    :root{--green:#176b45;--green2:#eaf5ee;--ink:#183126;--muted:#607168;--line:#dce7df;--danger:#a52828}
+    *{box-sizing:border-box}body{margin:0;background:#f4f7f5;color:var(--ink);font-family:Tahoma,"Noto Sans Thai",sans-serif}
+    header{background:linear-gradient(120deg,#125a3a,#25845a);color:#fff;padding:24px 16px}
+    header .wrap,main{max-width:1000px;margin:auto}h1{font-size:clamp(21px,4vw,30px);margin:0 0 6px}header p{margin:0;opacity:.9}
+    main{padding:20px 14px 40px}.grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+    .card{background:#fff;border:1px solid var(--line);border-radius:14px;padding:18px;box-shadow:0 3px 12px #163b2510;margin-bottom:16px}
+    h2{font-size:18px;margin:0 0 14px}label{display:block;font-size:14px;font-weight:bold;margin:10px 0 6px}
+    input,select,textarea{width:100%;padding:11px 12px;border:1px solid #cbd9cf;border-radius:8px;font:inherit;background:white;color:inherit}
+    textarea{min-height:70px;resize:vertical}.row{display:grid;grid-template-columns:2fr 1fr 1fr;gap:10px;align-items:end}
+    button{border:0;border-radius:9px;background:var(--green);color:#fff;padding:11px 15px;font:inherit;font-weight:bold;cursor:pointer}
+    button.secondary{background:#e6efe9;color:var(--green)}button.danger{background:#9c2d2d}button:disabled{opacity:.55;cursor:wait}
+    .actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}.muted{color:var(--muted);font-size:13px}.status{padding:11px 13px;border-radius:9px;margin-bottom:15px;background:#eaf5ee;color:#145a39;white-space:pre-wrap}
+    .status.error{background:#fff0f0;color:var(--danger)}.hidden{display:none!important}.tablewrap{overflow:auto}
+    table{width:100%;border-collapse:collapse;font-size:14px}th,td{padding:10px;border-bottom:1px solid var(--line);text-align:left;white-space:nowrap}th{background:#f3f8f4}
+    .pill{display:inline-block;background:#fff0cf;color:#7a5100;border-radius:20px;padding:4px 9px;font-size:12px}
+    .topline{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+    @media(max-width:700px){.grid{grid-template-columns:1fr}.row{grid-template-columns:1fr 1fr}.row .item-select{grid-column:1/-1}}
+  </style>
 </head>
 <body>
+<header><div class="wrap"><h1>ระบบเบิกจ่ายวัสดุสำนักงาน</h1><p>บันทึกใบเบิกและติดตามสถานะการดำเนินงาน</p></div></header>
+<main>
+  <div id="status" class="status">กำลังเชื่อมต่อระบบ...</div>
 
-<!-- ================= LOGIN ================= -->
-<div id="loginView" class="container"><div class="card login-box"><div class="card-body p-4">
-  <h4 class="text-center mb-1">ระบบเบิกจ่ายวัสดุสำนักงาน</h4>
-  <p class="text-center text-muted small mb-4">เข้าสู่ระบบผ่าน GitHub Pages</p>
-  <form onsubmit="doLogin(event)">
-    <input id="lgUser" class="form-control mb-2" placeholder="ชื่อผู้ใช้" autocomplete="username" required>
-    <input id="lgPass" type="password" class="form-control mb-2" placeholder="รหัสผ่าน" autocomplete="current-password" required>
-    <div id="lgErr" class="text-danger small mb-2"></div>
-    <button id="lgBtn" class="btn btn-primary w-100">เข้าสู่ระบบ</button>
-  </form>
-</div></div></div>
-
-<!-- ================= APP ================= -->
-<div id="appView" class="d-none">
-<nav class="navbar navbar-dark bg-primary mb-3"><div class="container">
-  <span class="navbar-brand">ระบบเบิกจ่ายวัสดุสำนักงาน</span>
-  <div class="d-flex align-items-center gap-2 flex-wrap">
-    <span class="text-white small" id="who"></span>
-    <button class="btn btn-sm btn-light" onclick="refresh()">รีเฟรช</button>
-    <button class="btn btn-sm btn-outline-light" onclick="logout()">ออกจากระบบ</button>
-  </div>
-</div></nav>
-
-<div class="container pb-5">
-<ul class="nav nav-pills mb-3 flex-wrap gap-1">
-  <li class="nav-item"><button class="nav-link active" data-bs-toggle="pill" data-bs-target="#tDash">แดชบอร์ด</button></li>
-  <li class="nav-item"><button class="nav-link" data-bs-toggle="pill" data-bs-target="#tREQ">ขอเบิกวัสดุ</button></li>
-  <li class="nav-item" data-roles="approver,officer"><button class="nav-link" data-bs-toggle="pill" data-bs-target="#tAppr" onclick="loadPending()">อนุมัติ/จ่ายของ <span id="pendBadge" class="badge text-bg-danger"></span></button></li>
-  <li class="nav-item" data-roles="officer"><button class="nav-link" data-bs-toggle="pill" data-bs-target="#tRCV">รับวัสดุเข้า</button></li>
-  <li class="nav-item"><button class="nav-link" data-bs-toggle="pill" data-bs-target="#tStock">คลังวัสดุ</button></li>
-  <li class="nav-item"><button class="nav-link" data-bs-toggle="pill" data-bs-target="#tDocs" onclick="loadDocs()">เอกสาร</button></li>
-  <li class="nav-item" data-roles="admin"><button class="nav-link" data-bs-toggle="pill" data-bs-target="#tUsers" onclick="loadUsers()">ผู้ใช้งาน</button></li>
-</ul>
-
-<div class="tab-content">
-  <!-- แดชบอร์ด -->
-  <div class="tab-pane fade show active" id="tDash">
-    <div class="row g-3 mb-3 kpi" id="kpi"></div>
-    <div class="card"><div class="card-body">
-      <h5>วัสดุที่ควรจัดซื้อ (คงเหลือ ≤ ขั้นต่ำ)</h5>
-      <div class="table-responsive"><table class="table table-sm">
-        <thead><tr><th>รหัส</th><th>วัสดุ</th><th>หน่วย</th><th class="text-end">คงเหลือ</th><th class="text-end">ขั้นต่ำ</th><th class="text-end">ควรมี</th><th class="text-end">ต้องซื้อ</th></tr></thead>
-        <tbody id="warnBody"></tbody>
-      </table></div>
-    </div></div>
-  </div>
-
-  <!-- ขอเบิก -->
-  <div class="tab-pane fade" id="tREQ"><div class="card"><div class="card-body">
-    <h5>ขอเบิกวัสดุ</h5>
-    <div class="row g-2 mb-3">
-      <div class="col-md-3"><label class="form-label">วันที่</label><input type="date" id="REQ_date" class="form-control"></div>
-      <div class="col-md-5"><label class="form-label">ผู้เบิก</label><select id="REQ_person" class="form-select"></select></div>
-      <div class="col-md-4"><label class="form-label">หมายเหตุ/วัตถุประสงค์</label><input id="REQ_note" class="form-control"></div>
+  <section id="loginCard" class="card">
+    <h2>เข้าสู่ระบบ</h2>
+    <div class="grid">
+      <div><label for="username">ชื่อผู้ใช้</label><input id="username" autocomplete="username" value=""></div>
+      <div><label for="password">รหัสผ่าน</label><input id="password" type="password" autocomplete="current-password"></div>
     </div>
-    <table class="table table-sm align-middle">
-      <thead><tr><th>#</th><th style="width:50%">รายการวัสดุ</th><th>หน่วย</th><th class="text-end">พร้อมเบิก</th><th style="width:120px">จำนวนขอเบิก</th><th></th></tr></thead>
-      <tbody id="REQ_lines"></tbody>
-    </table>
-    <button class="btn btn-outline-primary btn-sm" onclick="addLine('REQ')">+ เพิ่มรายการ</button>
-    <button class="btn btn-primary float-end" id="REQ_btn" onclick="submitDoc('REQ')">ส่งใบเบิก (รออนุมัติ)</button>
-  </div></div></div>
+    <div class="actions"><button id="loginBtn" onclick="login()">เข้าสู่ระบบ</button><button class="secondary" onclick="continueGuest()">เข้าใช้งานแบบไม่เข้าสู่ระบบ</button></div>
+    <p class="muted">บัญชีตัวอย่างหลังรัน setupSheets(): admin / change-me — โปรดเปลี่ยนรหัสผ่านก่อนใช้งานจริง</p>
+  </section>
 
-  <!-- อนุมัติ / จ่าย -->
-  <div class="tab-pane fade" id="tAppr">
-    <div class="card mb-3"><div class="card-body">
-      <h5>รออนุมัติ</h5>
-      <div class="table-responsive"><table class="table table-sm align-middle">
-        <thead><tr><th>เลขที่</th><th>วันที่</th><th>ผู้เบิก</th><th>รายการ</th><th></th></tr></thead>
-        <tbody id="pendBody"></tbody></table></div>
-    </div></div>
-    <div class="card"><div class="card-body">
-      <h5>อนุมัติแล้ว รอจ่ายของ</h5>
-      <div class="table-responsive"><table class="table table-sm align-middle">
-        <thead><tr><th>เลขที่</th><th>วันที่</th><th>ผู้เบิก</th><th>รายการ</th><th></th></tr></thead>
-        <tbody id="apprBody"></tbody></table></div>
-    </div></div>
+  <div id="app" class="hidden">
+    <section class="card">
+      <div class="topline"><h2>สร้างใบเบิกวัสดุ</h2><span id="userBadge" class="pill">ผู้ใช้งาน</span></div>
+      <div class="grid">
+        <div><label for="requester">ชื่อผู้เบิก</label><input id="requester" placeholder="ระบุชื่อผู้เบิก"></div>
+        <div><label for="department">หน่วยงาน</label><input id="department" placeholder="ระบุหน่วยงาน"></div>
+      </div>
+      <label for="purpose">วัตถุประสงค์การเบิก</label><textarea id="purpose" placeholder="ระบุวัตถุประสงค์"></textarea>
+      <label for="note">หมายเหตุ (ถ้ามี)</label><input id="note" placeholder="หมายเหตุ">
+      <h2 style="margin-top:20px">รายการวัสดุ</h2>
+      <div id="lineList"></div>
+      <div class="actions"><button class="secondary" onclick="addLine()">+ เพิ่มรายการ</button><button id="submitBtn" onclick="submitRequest()">บันทึกใบเบิก</button></div>
+    </section>
+
+    <section class="card">
+      <div class="topline"><h2>รายการใบเบิก</h2><button class="secondary" onclick="loadDocs()">รีเฟรช</button></div>
+      <label for="searchDocs">ค้นหาเลขที่ใบเบิก / ชื่อผู้เบิก / หน่วยงาน</label><input id="searchDocs" oninput="filterDocs()" placeholder="พิมพ์คำค้น">
+      <div class="tablewrap" style="margin-top:12px"><table><thead><tr><th>เลขที่ใบเบิก</th><th>วันที่</th><th>ผู้เบิก</th><th>หน่วยงาน</th><th>สถานะ</th><th>รายละเอียด</th></tr></thead><tbody id="docsBody"><tr><td colspan="6">กำลังโหลด...</td></tr></tbody></table></div>
+    </section>
+    <section id="detailCard" class="card hidden"><h2>รายละเอียดใบเบิก</h2><div id="detailBody"></div></section>
   </div>
-
-  <!-- รับเข้า -->
-  <div class="tab-pane fade" id="tRCV"><div class="card"><div class="card-body">
-    <h5>บันทึกรับวัสดุเข้า</h5>
-    <div class="row g-2 mb-3">
-      <div class="col-md-2"><label class="form-label">วันที่</label><input type="date" id="RCV_date" class="form-control"></div>
-      <div class="col-md-3"><label class="form-label">เลขที่ใบส่งของ</label><input id="RCV_ref" class="form-control" placeholder="เช่น MS314/69"></div>
-      <div class="col-md-4"><label class="form-label">ผู้รับ</label><select id="RCV_person" class="form-select"></select></div>
-      <div class="col-md-3"><label class="form-label">หมายเหตุ</label><input id="RCV_note" class="form-control"></div>
-    </div>
-    <table class="table table-sm align-middle">
-      <thead><tr><th>#</th><th style="width:45%">รายการวัสดุ</th><th>หน่วย</th><th class="text-end">คงเหลือ</th><th style="width:110px">จำนวนรับ</th><th style="width:160px">วันหมดอายุ</th><th></th></tr></thead>
-      <tbody id="RCV_lines"></tbody>
-    </table>
-    <button class="btn btn-outline-primary btn-sm" onclick="addLine('RCV')">+ เพิ่มรายการ</button>
-    <button class="btn btn-success float-end" id="RCV_btn" onclick="submitDoc('RCV')">บันทึกรับเข้า</button>
-  </div></div></div>
-
-  <!-- คลังวัสดุ -->
-  <div class="tab-pane fade" id="tStock"><div class="card"><div class="card-body">
-    <div class="d-flex gap-2 mb-2">
-      <input id="q" class="form-control" placeholder="ค้นหาชื่อ/รหัสวัสดุ" oninput="renderStock()">
-      <select id="qStatus" class="form-select w-auto" onchange="renderStock()">
-        <option value="">ทุกสถานะ</option><option>ปกติ</option><option>ใกล้หมด</option><option>หมดแล้ว</option><option>ไม่ใช้แล้ว</option>
-      </select>
-    </div>
-    <div class="table-responsive"><table class="table table-sm table-hover">
-      <thead><tr><th>รหัส</th><th>วัสดุ</th><th>หน่วย</th><th class="text-end">คงเหลือ</th><th class="text-end">ขั้นต่ำ</th><th class="text-end">สูงสุด</th><th>สถานะ</th></tr></thead>
-      <tbody id="stockBody"></tbody>
-    </table></div>
-  </div></div></div>
-
-  <!-- เอกสาร -->
-  <div class="tab-pane fade" id="tDocs">
-    <div class="card mb-3"><div class="card-body"><div class="row g-2 align-items-end">
-      <div class="col-md-2"><label class="form-label">ตั้งแต่</label><input type="date" id="dFrom" class="form-control"></div>
-      <div class="col-md-2"><label class="form-label">ถึง</label><input type="date" id="dTo" class="form-control"></div>
-      <div class="col-md-3"><label class="form-label">ประเภท</label><select id="dType" class="form-select">
-        <option value="">ทั้งหมด</option><option value="REQ">เบิก</option><option value="RCV">รับเข้า</option></select></div>
-      <div class="col-md-3"><label class="form-label">สถานะ</label><select id="dStatus" class="form-select">
-        <option value="">ทั้งหมด</option><option>รออนุมัติ</option><option>อนุมัติแล้ว</option><option>จ่ายแล้ว</option><option>ไม่อนุมัติ</option></select></div>
-      <div class="col-md-2"><button class="btn btn-primary w-100" onclick="loadDocs()">แสดง</button></div>
-    </div></div></div>
-    <div class="card"><div class="card-body"><div class="table-responsive"><table class="table table-sm align-middle">
-      <thead><tr><th>เลขที่</th><th>ประเภท</th><th>วันที่</th><th>ผู้ทำรายการ</th><th>รายการ</th><th>สถานะ</th><th></th></tr></thead>
-      <tbody id="docBody"></tbody></table></div></div></div>
-  </div>
-
-  <!-- ผู้ใช้งาน -->
-  <div class="tab-pane fade" id="tUsers"><div class="card"><div class="card-body">
-    <div class="d-flex mb-2"><h5 class="me-auto">ผู้ใช้งาน</h5></div>
-    <div class="table-responsive"><table class="table table-sm align-middle">
-      <thead><tr><th>ชื่อผู้ใช้</th><th>ชื่อที่แสดง</th><th>สิทธิ์</th><th>ผูกกับบุคลากร</th><th>สถานะ</th></tr></thead>
-      <tbody id="userBody"></tbody></table></div>
-  </div></div></div>
-</div>
-</div>
-</div>
-
-<datalist id="itemList"></datalist>
-
-<!-- ผลการบันทึก -->
-<div class="modal fade" id="mResult" tabindex="-1"><div class="modal-dialog modal-dialog-centered"><div class="modal-content">
-  <div class="modal-body text-center p-4"><h5 class="text-success">บันทึกสำเร็จ</h5><p id="resMsg"></p>
-    <button id="resPrint" class="btn btn-primary">พิมพ์เอกสาร (A4)</button>
-    <button class="btn btn-secondary" data-bs-dismiss="modal">ปิด</button></div>
-</div></div></div>
-
-<!-- พิจารณาอนุมัติ -->
-<div class="modal fade" id="mAppr" tabindex="-1"><div class="modal-dialog modal-lg"><div class="modal-content">
-  <div class="modal-header"><h5 class="modal-title" id="apTitle"></h5><button class="btn-close" data-bs-dismiss="modal"></button></div>
-  <div class="modal-body">
-    <div id="apInfo" class="mb-2 small"></div>
-    <table class="table table-sm align-middle"><thead><tr><th>วัสดุ</th><th>หน่วย</th><th class="text-end">ขอเบิก</th><th style="width:120px">อนุมัติ</th></tr></thead>
-      <tbody id="apBody"></tbody></table>
-    <input id="apNote" class="form-control" placeholder="ความเห็น/เหตุผล (บังคับกรอกเมื่อไม่อนุมัติ)">
-  </div>
-  <div class="modal-footer">
-    <button class="btn btn-outline-danger" onclick="decide(false)">ไม่อนุมัติ</button>
-    <button class="btn btn-success" onclick="decide(true)">อนุมัติ</button>
-  </div>
-</div></div></div>
-
-<!-- ตัวอย่างก่อนพิมพ์ -->
-<div class="modal fade" id="mPrint" tabindex="-1"><div class="modal-dialog modal-xl"><div class="modal-content">
-  <div class="modal-header"><h5 class="modal-title">ตัวอย่างก่อนพิมพ์ (A4)</h5>
-    <div class="ms-auto"><button class="btn btn-primary" onclick="$('printFrame').contentWindow.print()">พิมพ์ / บันทึก PDF</button>
-    <button class="btn btn-secondary" data-bs-dismiss="modal">ปิด</button></div></div>
-  <div class="modal-body p-0"><iframe id="printFrame"></iframe></div>
-</div></div></div>
-
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <p class="muted">หากระบบแจ้งข้อผิดพลาด ให้ตรวจสอบ URL ของ Web App, สิทธิ์การ Deploy และ Executions ใน Apps Script</p>
+</main>
 <script>
-// ใส่ URL ล่าสุดจากการ Deploy Google Apps Script ตรงนี้
-const API_URL = "https://script.google.com/macros/s/AKfycbydMO6YX6vZiS-TWykC4u5Oi6OEjlnTraYo9z9N8FW-nQn_PGTDPTJ0f3IlFXZC6xhb/exec";
+  // ใส่ URL Web App ที่ลงท้ายด้วย /exec จาก Deploy > Manage deployments
+  const API_URL = 'https://script.google.com/macros/s/AKfycbz80WgQw6jmvIiEeBoBx0BHw7kdaoQaij1EMDJ0-ZbrHNyJkZmeab7JLYviuPI6bwk/exec';
 
-let S = { user: null, items: [], pending: 0, people: [], users: [] };
-let CUR = null;
+  let currentUser = null;
+  let allDocs = [];
+  let items = [];
 
-const $ = id => document.getElementById(id);
-const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-const clean = m => String(m || '').replace(/^(Error|Exception|ScriptError):\s*/i, '');
-const ymd = d => { d = new Date(d); d.setMinutes(d.getMinutes() - d.getTimezoneOffset()); return d.toISOString().slice(0, 10); };
-const thd = d => d ? new Date(d).toLocaleDateString('th-TH') : '';
-const ROLE_TH = { user: 'ผู้เบิก', approver: 'ผู้อนุมัติ', officer: 'เจ้าหน้าที่พัสดุ', admin: 'ผู้ดูแลระบบ' };
-const TYPE_TH = { REQ: 'เบิก', RCV: 'รับเข้า' };
-const BADGE = { 'ปกติ':'success','ใกล้หมด':'warning','หมดแล้ว':'danger','รออนุมัติ':'warning','อนุมัติแล้ว':'info','จ่ายแล้ว':'success','ไม่อนุมัติ':'danger' };
-const badge = s => `<span class="badge text-bg-${BADGE[s] || 'light'}">${esc(s)}</span>`;
-const can = (...r) => !!S.user && (S.user.role === 'admin' || r.includes(S.user.role));
-const modal = id => bootstrap.Modal.getOrCreateInstance($(id));
-const itemOf = id => (S.items || []).find(i => String(i.item_id) === String(id));
-const EMPTY = n => `<tr><td colspan="${n}" class="text-center text-muted">ไม่มีข้อมูล</td></tr>`;
-
-async function api(action, ...args) {
-  const p = new URLSearchParams();
-  p.append('action', action);
-  p.append('args', JSON.stringify(args));
-  p.append('token', 'active_token');
-
-  const res = await fetch(`${API_URL}?${p.toString()}`).catch(err => {
-    throw new Error("Connection Error: " + err.message);
-  });
-  
-  const json = await res.json();
-  if (!json.success) {
-    throw new Error(json.error || "Unknown Error");
+  function showStatus(message, isError=false) {
+    const el = document.getElementById('status');
+    el.textContent = message;
+    el.className = 'status' + (isError ? ' error' : '');
   }
-  return json.data;
-}
 
-async function doLogin(ev) {
-  ev.preventDefault(); $('lgBtn').disabled = true; $('lgErr').textContent = '';
-  try {
-    const r = await api('login', $('lgUser').value, $('lgPass').value);
-    S.user = r.user; 
-    $('lgPass').value = '';
-
-    const initData = await api('getInitData');
-    start(Object.assign({}, initData, { user: S.user }));
-  } catch (e) { 
-    $('lgErr').textContent = clean(e.message); 
-  } finally { 
-    $('lgBtn').disabled = false; 
+  function api(action, args={}) {
+    return new Promise((resolve, reject) => {
+      if (!API_URL || API_URL.includes('PASTE_YOUR')) {
+        reject(new Error('กรุณาใส่ URL ของ Apps Script Web App ในตัวแปร API_URL ก่อน'));
+        return;
+      }
+      const callback = 'gasCallback_' + Date.now() + '_' + Math.floor(Math.random()*100000);
+      const script = document.createElement('script');
+      let finished = false;
+      const timer = setTimeout(() => finish(new Error('หมดเวลารอคำตอบจาก Apps Script กรุณาตรวจสอบ URL และการ Deploy')), 30000);
+      function finish(err, data) {
+        if (finished) return;
+        finished = true;
+        clearTimeout(timer);
+        try { delete window[callback]; } catch (_) { window[callback] = undefined; }
+        script.remove();
+        if (err) reject(err); else resolve(data);
+      }
+      window[callback] = (response) => {
+        if (!response || response.success !== true) {
+          finish(new Error(response && response.error ? response.error : 'Apps Script ส่งผลลัพธ์ไม่ถูกต้อง'));
+        } else finish(null, response.data);
+      };
+      const params = new URLSearchParams();
+      params.set('action', action);
+      params.set('args', JSON.stringify(args));
+      params.set('callback', callback);
+      script.onerror = () => finish(new Error('เรียก Apps Script ไม่สำเร็จ: ตรวจสอบ URL /exec และสิทธิ์การเข้าถึง'));
+      script.src = API_URL + (API_URL.includes('?') ? '&' : '?') + params.toString();
+      document.head.appendChild(script);
+    });
   }
-}
 
-function start(d) {
-  Object.assign(S, d);
-  $('loginView').classList.add('d-none');$('appView').classList.remove('d-none');
-  
-  const uName = S.user ? (S.user.name || S.user.display_name || S.user.username) : 'ผู้ใช้งาน';
-  const uRole = S.user ? (ROLE_TH[S.user.role] || S.user.role) : '';
-  $('who').textContent = `${uName} (${uRole})`;
-  
-  document.querySelectorAll('[data-roles]').forEach(el => el.classList.toggle('d-none', !can(...el.dataset.roles.split(','))));
-  
-  const opts = (S.people || []).map(p => `<option>${esc(p.name || p)}</option>`).join('');
-  if (S.user && S.user.role === 'user') { 
-    const myPerson = S.user.person || S.user.name || S.user.username;
-    $('REQ_person').innerHTML = `<option>${esc(myPerson)}</option>`; 
-    $('REQ_person').disabled = true; 
-  } else { 
-    $('REQ_person').innerHTML = '<option value="">-- เลือกผู้เบิก --</option>' + opts; 
-    $('REQ_person').disabled = false; 
+  async function initialize() {
+    try {
+      const data = await api('getInitData');
+      items = data.items || [];
+      renderLines();
+      allDocs = data.docs || [];
+      renderDocs(allDocs);
+      showStatus('เชื่อมต่อระบบสำเร็จ');
+    } catch (e) {
+      showStatus(e.message, true);
+    }
   }
-  
-  $('RCV_person').innerHTML = opts; 
-  if (S.user && S.user.person) $('RCV_person').value = S.user.person;
-  
-  renderAll(); 
-  resetLines('REQ'); 
-  resetLines('RCV');
-  if (can('approver', 'officer')) loadPending();
-}
 
-async function refresh() {
-  const d = await api('getInitData').catch(() => null); 
-  if (!d) return;
-  Object.assign(S, d); 
-  renderAll();
-  if (can('approver', 'officer')) loadPending();
-}
+  async function login() {
+    const btn = document.getElementById('loginBtn');
+    btn.disabled = true;
+    try {
+      currentUser = await api('login', {
+        username: document.getElementById('username').value.trim(),
+        password: document.getElementById('password').value
+      });
+      enterApp(currentUser);
+      showStatus('เข้าสู่ระบบสำเร็จ');
+    } catch(e) { showStatus(e.message, true); }
+    finally { btn.disabled = false; }
+  }
 
-async function logout() { 
-  location.reload();
-}
+  function continueGuest() {
+    currentUser = {username:'guest', name:'ผู้ใช้งานทั่วไป', role:'user'};
+    enterApp(currentUser);
+    showStatus('เข้าใช้งานแบบไม่เข้าสู่ระบบ — โปรดใช้เฉพาะการทดสอบ');
+  }
 
-function status(it) {
-  if (it.active !== true) return 'ไม่ใช้แล้ว';
-  if (Number(it.qty) <= 0) return 'หมดแล้ว';
-  if (Number(it.qty) <= Number(it.min_qty)) return 'ใกล้หมด';
-  return 'ปกติ';
-}
-const toBuy = it => it.active === true ? Math.max(0, Number(it.max_qty) - Number(it.qty)) : 0;
+  function enterApp(user) {
+    document.getElementById('loginCard').classList.add('hidden');
+    document.getElementById('app').classList.remove('hidden');
+    document.getElementById('userBadge').textContent = user.name || user.username;
+    if (!document.getElementById('requester').value) document.getElementById('requester').value = user.name || '';
+    loadDocs();
+  }
 
-function renderAll() {
-  $('itemList').innerHTML = (S.items || []).filter(i => i.active === true).map(i => `<option value="${esc(i.item_id + ' | ' + i.name)}">`).join('');
-  const c = { 'ปกติ': 0, 'ใกล้หมด': 0, 'หมดแล้ว': 0 };
-  (S.items || []).forEach(i => { const s = status(i); if (s in c) c[s]++; });
-  $('kpi').innerHTML = [['วัสดุที่ใช้งาน', c['ปกติ'] + c['ใกล้หมด'] + c['หมดแล้ว'], 'primary'], ['ใกล้หมด', c['ใกล้หมด'], 'warning'],
-    ['หมดแล้ว', c['หมดแล้ว'], 'danger'], ['ใบเบิกที่ยังไม่จ่าย', S.pending || 0, 'info']]
-    .map(([t, n, col]) => `<div class="col-6 col-md-3"><div class="card border-start border-4 border-${col}"><div class="card-body"><div class="text-muted small">${t}</div><h3>${n}</h3></div></div></div>`).join('');
-  $('warnBody').innerHTML = (S.items || []).filter(i => ['ใกล้หมด', 'หมดแล้ว'].includes(status(i))).map(i =>
-    `<tr><td>${i.item_id}</td><td>${esc(i.name)}</td><td>${esc(i.unit)}</td><td class="text-end">${i.qty}</td><td class="text-end">${i.min_qty}</td><td class="text-end">${i.max_qty}</td><td class="text-end fw-bold">${toBuy(i)}</td></tr>`).join('')
-    || '<tr><td colspan="7" class="text-center text-muted">ไม่มีรายการที่ต้องจัดซื้อ</td></tr>';
-  renderStock();
-  $('REQ_date').value = ymd(new Date());$('RCV_date').value = ymd(new Date());
-}
+  function renderLines() {
+    document.getElementById('lineList').innerHTML = '';
+    addLine();
+  }
 
-function renderStock() {
-  const q = $('q').value.trim().toLowerCase(), st =$('qStatus').value;
-  $('stockBody').innerHTML = (S.items || []).filter(i => (!q || (i.item_id + ' ' + i.name).toLowerCase().includes(q)) && (!st || status(i) === st))
-    .map(i => `<tr><td>${i.item_id}</td><td>${esc(i.name)}</td><td>${esc(i.unit)}</td><td class="text-end">${i.qty}</td>
-      <td class="text-end">${i.min_qty}</td><td class="text-end">${i.max_qty}</td>
-      <td>${badge(status(i))}</td></tr>`).join('');
-}
+  function addLine() {
+    const wrap = document.createElement('div');
+    wrap.className = 'row line-row';
+    const options = items.map(it => `<option value="${escapeAttr(it.item_id)}">${escapeHtml(it.item_name)} (${escapeHtml(it.unit || '-')}) — คงเหลือ ${escapeHtml(it.stock ?? '-')}</option>`).join('');
+    wrap.innerHTML = `
+      <div class="item-select"><label>วัสดุ</label><select class="line-item">${options || '<option value="">ไม่พบรายการวัสดุ</option>'}</select></div>
+      <div><label>จำนวน</label><input class="line-qty" type="number" min="1" step="1" value="1"></div>
+      <div><label>หมายเหตุ</label><button type="button" class="danger" onclick="this.closest('.line-row').remove()" style="width:100%">ลบรายการ</button></div>`;
+    document.getElementById('lineList').appendChild(wrap);
+  }
 
-function resetLines(t) { $(t + '_lines').innerHTML = ''; addLine(t); }
-function addLine(t) {
-  const tr = document.createElement('tr');
-  tr.innerHTML = `<td class="no"></td>
-    <td><input class="form-control form-control-sm item" list="itemList" placeholder="พิมพ์รหัสหรือชื่อวัสดุ"></td>
-    <td class="unit"></td><td class="bal text-end"></td>
-    <td><input type="number" min="1" step="1" class="form-control form-control-sm qty" value="1"></td>
-    ${t === 'RCV' ? '<td><input type="date" class="form-control form-control-sm exp"></td>' : ''}
-    <td><button type="button" class="btn btn-sm btn-outline-danger">ลบ</button></td>`;
-  const inp = tr.querySelector('.item');
-  inp.addEventListener('change', () => {
-    const it = itemOf(inp.value.split('|')[0].trim());
-    tr.dataset.id = it ? it.item_id : '';
-    tr.querySelector('.unit').textContent = it ? it.unit : '';
-    tr.querySelector('.bal').textContent = it ? it.qty : '';
-    inp.classList.toggle('is-invalid', !it);
-    if (it && tr === $(t + '_lines').lastElementChild) addLine(t);
-  });
-  tr.querySelector('button').onclick = () => { tr.remove(); renum(t); };
-  $(t + '_lines').appendChild(tr); renum(t);
-}
-function renum(t) { [...$(t + '_lines').rows].forEach((r, i) => r.querySelector('.no').textContent = i + 1); }
+  async function submitRequest() {
+    const btn = document.getElementById('submitBtn');
+    const lines = [...document.querySelectorAll('.line-row')].map(row => ({
+      item_id: row.querySelector('.line-item').value,
+      qty: Number(row.querySelector('.line-qty').value)
+    })).filter(line => line.item_id);
+    if (!lines.length) { showStatus('กรุณาเพิ่มรายการวัสดุอย่างน้อย 1 รายการ', true); return; }
+    if (lines.some(l => !Number.isFinite(l.qty) || l.qty <= 0)) { showStatus('จำนวนวัสดุต้องมากกว่า 0', true); return; }
+    btn.disabled = true;
+    try {
+      const result = await api('createRequest', {
+        requester: document.getElementById('requester').value.trim(),
+        department: document.getElementById('department').value.trim(),
+        purpose: document.getElementById('purpose').value.trim(),
+        note: document.getElementById('note').value.trim(),
+        lines: lines
+      });
+      showStatus('บันทึกใบเบิกสำเร็จ เลขที่ ' + result.doc_no);
+      document.getElementById('purpose').value = '';
+      document.getElementById('note').value = '';
+      await loadDocs();
+      await initializeItemsOnly();
+    } catch(e) {
+      showStatus('บันทึกใบเบิกไม่สำเร็จ: ' + e.message, true);
+    } finally { btn.disabled = false; }
+  }
 
-const busy = async (btn, fn) => {
-  btn.disabled = true;
-  try { return await fn(); }
-  catch(e) { alert(clean(e.message)); return null; }
-  finally { btn.disabled = false; }
-};
+  async function initializeItemsOnly() {
+    const data = await api('getInitData');
+    items = data.items || [];
+    renderLines();
+  }
 
-async function submitDoc(t) {
-  const lines = [...$(t + '_lines').rows].filter(r => r.dataset.id).map(r => ({
-    item_id: r.dataset.id, qty: Number(r.querySelector('.qty').value), expiry: r.querySelector('.exp')?.value || '' }));
-  if (!lines.length) return alert('กรุณาเลือกรายการวัสดุ');
-  if (lines.some(l => !(l.qty > 0))) return alert('กรุณาระบุจำนวนให้ครบและมากกว่า 0');
-  
-  const p = { date: $(t + '_date').value, person: $(t + '_person').value, note:$(t + '_note').value,
-              ref_no: t === 'RCV' ? $('RCV_ref').value.trim() : '', lines };
-  if (!p.person) return alert('กรุณาเลือกชื่อ');
-  if (t === 'RCV' && !p.ref_no) return alert('กรุณาระบุเลขที่ใบส่งของ');
-  
-  const r = await busy($(t + '_btn'), () => api(t === 'REQ' ? 'createRequest' : 'saveReceive', p));
-  if (!r) return;
-  resetLines(t); $(t + '_note').value = ''; if (t === 'RCV')$('RCV_ref').value = '';
-  await refresh();
-  showResult(t === 'REQ' ? `ส่งใบเบิกเลขที่ ${r.doc_no} แล้ว อยู่ระหว่างรออนุมัติ` : `บันทึกรับเข้าเลขที่ ${r.doc_no} แล้ว`, r.doc_no);
-}
+  async function loadDocs() {
+    try {
+      allDocs = await api('listDocs');
+      renderDocs(allDocs);
+    } catch(e) { showStatus(e.message, true); }
+  }
 
-function showResult(msg, doc) {
-  $('resMsg').textContent = msg;
-  $('resPrint').onclick = () => { modal('mResult').hide(); printDoc(doc); };
-  modal('mResult').show();
-}
+  function filterDocs() {
+    const q = document.getElementById('searchDocs').value.toLowerCase();
+    renderDocs(allDocs.filter(d => [d.doc_no,d.requester,d.department,d.status].join(' ').toLowerCase().includes(q)));
+  }
 
-function showPrint(html) { $('printFrame').srcdoc = html; modal('mPrint').show(); }
-async function printDoc(doc) { 
-  const h = await api('getPrintHtml', doc).catch(() => null); 
-  if (h) showPrint(h); 
-  else alert('ไม่สามารถดึงข้อมูลสำหรับพิมพ์ได้');
-}
+  function renderDocs(docs) {
+    const body = document.getElementById('docsBody');
+    if (!docs || !docs.length) {
+      body.innerHTML = '<tr><td colspan="6">ยังไม่มีใบเบิก</td></tr>';
+      return;
+    }
+    body.innerHTML = docs.map(d => `<tr>
+      <td>${escapeHtml(d.doc_no)}</td><td>${escapeHtml(formatDate(d.created_at))}</td>
+      <td>${escapeHtml(d.requester)}</td><td>${escapeHtml(d.department)}</td>
+      <td><span class="pill">${escapeHtml(d.status)}</span></td>
+      <td><button class="secondary" onclick="showDetail('${escapeAttr(d.doc_no)}')">ดู</button></td>
+    </tr>`).join('');
+  }
 
-async function loadDocs() {
-  const docs = await api('listDocs', {}).catch(() => null);
-  if (!docs) return;
-  $('docBody').innerHTML = docs.map(d => `<tr><td>${esc(d.doc_no)}</td><td>${TYPE_TH[d.doc_type] || d.doc_type}</td>
-    <td>${thd(d.doc_date)}</td><td>${esc(d.person)}</td><td class="small">${esc(d.items)}</td><td>${badge(d.status)}</td>
-    <td><button class="btn btn-sm btn-outline-secondary" onclick="printDoc('${esc(d.doc_no)}')">พิมพ์</button></td></tr>`).join('') || EMPTY(7);
-}
+  async function showDetail(docNo) {
+    try {
+      const data = await api('getDocDetail', {doc_no:docNo});
+      document.getElementById('detailCard').classList.remove('hidden');
+      document.getElementById('detailBody').innerHTML = `
+        <p><b>เลขที่:</b> ${escapeHtml(data.document.doc_no)} &nbsp; <b>สถานะ:</b> ${escapeHtml(data.document.status)}</p>
+        <p><b>ผู้เบิก:</b> ${escapeHtml(data.document.requester)} &nbsp; <b>หน่วยงาน:</b> ${escapeHtml(data.document.department)}</p>
+        <p><b>วัตถุประสงค์:</b> ${escapeHtml(data.document.purpose)}</p>
+        <div class="tablewrap"><table><thead><tr><th>รหัส</th><th>วัสดุ</th><th>หน่วย</th><th>จำนวน</th></tr></thead><tbody>
+        ${(data.lines||[]).map(l=>`<tr><td>${escapeHtml(l.item_id)}</td><td>${escapeHtml(l.item_name)}</td><td>${escapeHtml(l.unit)}</td><td>${escapeHtml(l.qty)}</td></tr>`).join('')}
+        </tbody></table></div>`;
+      document.getElementById('detailCard').scrollIntoView({behavior:'smooth'});
+    } catch(e) { showStatus(e.message, true); }
+  }
 
-async function loadPending() {
-  const docs = await api('listDocs', {}).catch(() => null); if (!docs) return;
-  const p = docs.filter(d => d.status === 'รออนุมัติ'), a = docs.filter(d => d.status === 'อนุมัติแล้ว');
-  const row = (d, act) => `<tr><td>${esc(d.doc_no)}</td><td>${thd(d.doc_date)}</td><td>${esc(d.person)}</td><td class="small">${esc(d.items)}</td>
-    <td class="text-nowrap">${act}<button class="btn btn-sm btn-outline-secondary ms-1" onclick="printDoc('${esc(d.doc_no)}')">พิมพ์</button></td></tr>`;
-  $('pendBody').innerHTML = p.map(d => row(d, can('approver') ? `<button class="btn btn-sm btn-primary" onclick="openAppr('${esc(d.doc_no)}')">พิจารณา</button>` : '')).join('') || EMPTY(5);
-  $('apprBody').innerHTML = a.map(d => row(d, can('officer') ? `<button class="btn btn-sm btn-success" onclick="pay('${esc(d.doc_no)}')">จ่ายของ</button>` : '')).join('') || EMPTY(5);
-}
+  function formatDate(value) {
+    if (!value) return '-';
+    const d = new Date(value);
+    return Number.isNaN(d.getTime()) ? value : d.toLocaleString('th-TH');
+  }
+  function escapeHtml(value) {
+    return String(value ?? '').replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
+  }
+  function escapeAttr(value) { return escapeHtml(value); }
 
-async function openAppr(doc) {
-  const d = await api('getDocDetail', doc).catch(() => null); if (!d) return; CUR = d;
-  $('apTitle').textContent = 'พิจารณาใบเบิกเลขที่ ' + d.doc.doc_no;
-  $('apInfo').innerHTML = `ผู้เบิก: <b>${esc(d.doc.person)}</b> | วันที่ ${thd(d.doc.doc_date)}${d.doc.note ? ' | หมายเหตุ: ' + esc(d.doc.note) : ''}`;
-  $('apBody').innerHTML = d.lines.map(l => `<tr><td>${esc(l.item_name)}</td><td>${esc(l.unit)}</td>
-    <td class="text-end">${l.qty_req}</td>
-    <td><input type="number" min="0" max="${l.qty_req}" value="${l.qty_req}" data-id="${l.item_id}" class="form-control form-control-sm apq"></td></tr>`).join('');
-  $('apNote').value = ''; modal('mAppr').show();
-}
-
-async function decide(ok) {
-  if (!ok && !$('apNote').value.trim()) return alert('กรุณาระบุเหตุผลที่ไม่อนุมัติ');
-  const q = {}; document.querySelectorAll('.apq').forEach(i => q[i.dataset.id] = Number(i.value));
-  const r = await api('approveRequest', CUR.doc.doc_no, ok, q, $('apNote').value.trim()).catch(() => null);
-  if (r === null) return;
-  modal('mAppr').hide(); refresh();
-}
-
-async function pay(doc) {
-  if (!confirm(`ยืนยันจ่ายของตามใบเบิก ${doc} และตัดยอดคงเหลือ?`)) return;
-  const r = await api('payRequest', doc).catch(() => null); if (r === null) return;
-  await refresh();
-}
-
-async function loadUsers() {
-  const users = await api('listUsers').catch(() => null);
-  if (!users) return;
-  $('userBody').innerHTML = users.map(u => `<tr><td>${esc(u.username)}</td><td>${esc(u.display_name)}</td>
-    <td>${ROLE_TH[u.role] || u.role}</td><td>${esc(u.person_name)}</td><td>${badge(u.active ? 'ปกติ' : 'ไม่ใช้แล้ว')}</td></tr>`).join('') || EMPTY(5);
-}
+  initialize();
 </script>
 </body>
 </html>
