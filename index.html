@@ -188,6 +188,7 @@
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 <script>
+// ใส่ URL ล่าสุดจากการ Deploy Google Apps Script ตรงนี้
 const API_URL = "https://script.google.com/macros/s/AKfycbydMO6YX6vZiS-TWykC4u5Oi6OEjlnTraYo9z9N8FW-nQn_PGTDPTJ0f3IlFXZC6xhb/exec";
 
 let S = { user: null, items: [], pending: 0, people: [], users: [] };
@@ -211,8 +212,6 @@ async function api(action, ...args) {
   const p = new URLSearchParams();
   p.append('action', action);
   p.append('args', JSON.stringify(args));
-  
-  // เพิ่ม token เสมอเพื่อความเข้ากันได้
   p.append('token', 'active_token');
 
   const res = await fetch(`${API_URL}?${p.toString()}`).catch(err => {
@@ -252,7 +251,7 @@ function start(d) {
   
   document.querySelectorAll('[data-roles]').forEach(el => el.classList.toggle('d-none', !can(...el.dataset.roles.split(','))));
   
-  const opts = (S.people || []).map(p => `<option>${esc(p.name)}</option>`).join('');
+  const opts = (S.people || []).map(p => `<option>${esc(p.name || p)}</option>`).join('');
   if (S.user && S.user.role === 'user') { 
     const myPerson = S.user.person || S.user.name || S.user.username;
     $('REQ_person').innerHTML = `<option>${esc(myPerson)}</option>`; 
@@ -375,14 +374,7 @@ async function printDoc(doc) {
 }
 
 async function loadDocs() {
-  const filter = {
-    from: $('dFrom').value,
-    to: $('dTo').value,
-    type: $('dType').value,
-    status: $('dStatus').value,
-    user: S.user
-  };
-  const docs = await api('listDocs', filter).catch(() => null);
+  const docs = await api('listDocs', {}).catch(() => null);
   if (!docs) return;
   $('docBody').innerHTML = docs.map(d => `<tr><td>${esc(d.doc_no)}</td><td>${TYPE_TH[d.doc_type] || d.doc_type}</td>
     <td>${thd(d.doc_date)}</td><td>${esc(d.person)}</td><td class="small">${esc(d.items)}</td><td>${badge(d.status)}</td>
@@ -390,14 +382,12 @@ async function loadDocs() {
 }
 
 async function loadPending() {
-  const docs = await api('listDocs', { type: 'REQ', statuses: ['รออนุมัติ', 'อนุมัติแล้ว'] }).catch(() => null); if (!docs) return;
+  const docs = await api('listDocs', {}).catch(() => null); if (!docs) return;
   const p = docs.filter(d => d.status === 'รออนุมัติ'), a = docs.filter(d => d.status === 'อนุมัติแล้ว');
   const row = (d, act) => `<tr><td>${esc(d.doc_no)}</td><td>${thd(d.doc_date)}</td><td>${esc(d.person)}</td><td class="small">${esc(d.items)}</td>
     <td class="text-nowrap">${act}<button class="btn btn-sm btn-outline-secondary ms-1" onclick="printDoc('${esc(d.doc_no)}')">พิมพ์</button></td></tr>`;
   $('pendBody').innerHTML = p.map(d => row(d, can('approver') ? `<button class="btn btn-sm btn-primary" onclick="openAppr('${esc(d.doc_no)}')">พิจารณา</button>` : '')).join('') || EMPTY(5);
   $('apprBody').innerHTML = a.map(d => row(d, can('officer') ? `<button class="btn btn-sm btn-success" onclick="pay('${esc(d.doc_no)}')">จ่ายของ</button>` : '')).join('') || EMPTY(5);
-  const n = (can('approver') ? p.length : 0) + (can('officer') ? a.length : 0);
-  $('pendBadge').textContent = n || '';
 }
 
 async function openAppr(doc) {
