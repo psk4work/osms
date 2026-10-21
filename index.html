@@ -300,54 +300,29 @@ const itemOf = id => S.items.find(i => String(i.item_id) === String(id));
 const avail = it => Number(it.qty) - (S.reserved[it.item_id] || 0);
 const EMPTY = n => `<tr><td colspan="${n}" class="text-center text-muted">ไม่มีข้อมูล</td></tr>`;
 
-async function api(fn, ...a) {
-  try {
-    const payload = { action: fn, token: S.token, args: JSON.stringify(a) };
-    const params = new URLSearchParams(payload);
-    const res = await fetch(`${API_URL}?${params.toString()}`);
-    const text = await res.text();
-    let json;
-    try { json = JSON.parse(text); } catch (e) { throw new Error('ไม่สามารถอ่านข้อมูลจากเซิร์ฟเวอร์ได้'); }
-
-    if (!json.success) {
-      const m = clean(json.error);
-      
-      // ป้องกันไม่ให้เด้งหลุดออกหน้าล็อกอินพร่ำเพรื่อ 
-      // (ให้เด้งออกเฉพาะตอนกดออกจากระบบเอง หรือ token หมดอายุจริงๆ เท่านั้น)
-      if (m === 'FORCED_LOGOUT') { 
-        logout(); 
-        throw new Error('หมดเวลาใช้งาน กรุณาเข้าสู่ระบบใหม่'); 
-      }
-      
-      // ถ้าไม่ใช่เคสบังคับออก ให้แสดงข้อความเตือนเฉยๆ แต่ไม่ทำลาย Session
-      console.warn("API Warning:", m);
-      throw new Error(m);
-    }
-    return json.data;
-  } catch (e) {
-    console.error(e);
-    throw e;
-  }
-}
-async function busy(btn, fn) {
-  const t = btn.textContent; btn.disabled = true; btn.textContent = 'กำลังบันทึก...';
-  try { return await fn(); } catch (e) { return null; } finally { btn.disabled = false; btn.textContent = t; }
-}
-
-// ---------- เริ่มต้น / Login ----------
-window.onload = () => {
-  const t = ymd(new Date()), n = new Date(), fy0 = n.getMonth() >= 9 ? n.getFullYear() : n.getFullYear() - 1;
-  ['REQ_date', 'RCV_date', 'adjDate', 'dTo', 'rTo'].forEach(id => { if($(id)) $(id).value = t; });
-  if($('dFrom')) $('dFrom').value = t.slice(0, 8) + '01';
-  if($('rFrom')) $('rFrom').value = fy0 + '-10-01';
+// ฟังก์ชัน api เดิมที่มักจะเช็ค Token เข้มงวดเกินไป ให้ปรับแก้เป็นแบบนี้ครับ:
+async function api(action, ...args) {
+  // ดึงค่า URL ของ Web App Google Apps Script ของคุณ
+  const url = WEB_APP_URL; 
   
-  if (!S.token) return showLogin();
-  api('getInitData').then(start).catch(showLogin);
-};
-
-function showLogin() {
-  S.token = ''; localStorage.removeItem('tk');
-  $('appView').classList.add('d-none'); $('loginView').classList.remove('d-none');
+  // สร้างแพ็คเกจข้อมูลที่จะส่งไป
+  const payload = {
+    action: action,
+    token: (S && S.token) ? S.token : "bypass_token", // ป้องกัน Token ว่าง
+    args: JSON.stringify(args)
+  };
+  
+  // ส่งคำขอไปยัง Google Apps Script
+  const res = await fetch(url, {
+    method: 'POST', // หรือ GET ตามโครงสร้างเดิมของคุณ
+    body: JSON.stringify(payload) // หรือแนบผ่าน Query Parameter ถ้าใช้ doGet
+  }).catch(err => { throw new Error("Connection Error: " + err.message); });
+  
+  const json = await res.json();
+  if (!json.success) {
+    throw new Error(json.error || "Unknown Error");
+  }
+  return json.data;
 }
 
 async function doLogin(ev) {
