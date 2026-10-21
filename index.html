@@ -211,6 +211,9 @@ async function api(action, ...args) {
   const p = new URLSearchParams();
   p.append('action', action);
   p.append('args', JSON.stringify(args));
+  
+  // เพิ่ม token เสมอเพื่อความเข้ากันได้
+  p.append('token', 'active_token');
 
   const res = await fetch(`${API_URL}?${p.toString()}`).catch(err => {
     throw new Error("Connection Error: " + err.message);
